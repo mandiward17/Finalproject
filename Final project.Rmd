@@ -1,0 +1,118 @@
+---
+title: "Final project"
+author: "Mandi Ward & Marielena McWhirter"
+date: "5/5/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, 
+                      eval = TRUE, 
+                      warning = FALSE, 
+                      message = FALSE,
+                      fig.width = 5,
+                      fig.height = 4.25)
+
+library(tidyverse)
+library(afex)
+library(rio)
+library(here)
+library(knitr)
+library(kableExtra)
+library(misty)
+library(janitor)
+library(rstatix)
+library(psych)
+library(MOTE)
+
+theme_set(theme_minimal())
+```
+
+# Load in the data
+```{r}
+act_t1 <- import(here("data", "ACT Suicide Prevention T1.sav"), setclass = "tbl_df") %>% 
+  characterize() %>% 
+  clean_names()
+
+act_t1_12520 <- import(here("data", "ACT Suicide Prevention T1 1-25-20.sav"), setclass = "tbl_df") %>% 
+  characterize() %>% 
+  clean_names()
+```
+
+# Joining datasets
+```{r}
+act_all <- full_join(act_t1, act_t1_12520)
+```
+
+# Creating df with our variables of interest
+```{r}
+df <- act_all %>% 
+  select(id, dem1_17a, dem1_02a, bdi1)
+```
+
+# Checking variable types
+```{r}
+str(df)
+```
+
+# Frequency table THIS IS NOT MET....NO BALANCED GROUPS 
+```{r}
+df %>% 
+  group_by(dem1_02a, dem1_17a) %>% 
+  summarise(n = n()) %>% #new column "n" = row count of each factor grouping
+  spread(dem1_02a, n) # rows "spread" across the top
+```
+
+# Checking the assumptions with descriptives
+Descriptives:
+  The average BDI score is 7.68 (7.01), and IS NOT normally distributed (skew=1.77, kurtosis=4.39).
+```{r}
+describe(df)
+```
+
+
+# Visually inspecting the data 
+  Step 1: Extract means to examine group differences
+```{r}
+means <- df %>% #creating new object (tibble) with the means
+  group_by(dem1_02a, dem1_17a) %>% #grouping our results by our two independent variables, 'country' within levels of 'sen2'
+  summarise(mean_bdi = mean(bdi1))
+means
+```
+
+Step 2: Examine the means using a profile plot
+```{r}
+means %>% 
+  ggplot(aes(dem1_02a, mean_bdi, group = dem1_17a)) +
+  geom_point() +
+  geom_line(aes(color = dem1_17a))
+```
+
+ Visualize using boxplots
+```{r}
+df %>% 
+  ggplot(aes(x = dem1_17a, y = bdi1, fill = dem1_02a)) +
+  geom_boxplot() +
+  theme_minimal() +
+  theme(legend.position="bottom")
+```
+ 
+### Check the assumptions
+ 
+  There are three assumptions that are required to be met in order to successfully conduct an ANOVA. These include: Homogeneity of variance, Independence of observations, and normality. All assumptions are met and are further assessed and described below. 
+  
+### Assessing for homogeneity of variance with a Levene's Test.
+```{r}
+car::leveneTest(bdi1 ~ dem1_02a*dem1_17a, data = df, center = "mean")
+```
+
+### Running the ANOVA
+```{r}
+anova_test(df, formula = bdi1 ~ dem1_02a + dem1_17a + dem1_02a:dem1_17a, 
+                 detailed = TRUE, type = 3, effect.size = "pes")
+
+## because we have unbalanced groups anova will not run 
+```
+
+
+
