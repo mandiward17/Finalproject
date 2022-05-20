@@ -22,6 +22,7 @@ library(kableExtra)
 library(misty)
 library(janitor)
 library(rstatix)
+library(dplyr)
 library(psych)
 library(MOTE)
 
@@ -95,6 +96,7 @@ df %>%
   geom_boxplot() +
   theme_minimal() +
   theme(legend.position="bottom")
+
 ```
  
 ### Check the assumptions
@@ -113,6 +115,74 @@ anova_test(df, formula = bdi1 ~ dem1_02a + dem1_17a + dem1_02a:dem1_17a,
 
 ## because we have unbalanced groups anova will not run 
 ```
+2 x 4 factorial ANOVA:
+one possible combination:
+dating in a dorm
+dating in an apartment/house
+single in a dorm
+single in an apartment/house
+
+other possible combination:
+living in dorm
+living not in a dorm
+living in a dorm with roommates
+
+other possible variables: 
+(maybe age or year, in state vs out of state)
+male 
+female
+
+BDI
+
+
+
+table() function to look at grouping 
+with(df, table(var1, var2))
+table(df$var1, df$var2)
+
+
+BELOW IS WHERE I STARTED OVER TRYING TO CREATE NEW VARIABLE
+
+
+### Creating new variables
+```{r}
+df1 <- act_all %>% 
+  select(id, dem1_02a, dem1_17a, bdi1, dem1_07a)
+
+
+df1 <- df1 %>% 
+  rename(livingstat = dem1_02a,
+         datingstat = dem1_17a,
+         BDI = bdi1,
+         gender = dem1_07a)
+```
+
+#dropping NA values in rows below
+```{r}
+df1$living_dating <- paste(df1$livingstat, df1$datingstat)
+
+df2 <- df1 %>%
+  drop_na(BDI, living_dating, gender)
+
+
+```
+
+#looking at group blances...this is where there is still an issue with the "I choose not to answer" option. Because of this the ANOVA will not run
+```{r}
+
+df2 %>% 
+  group_by(living_dating, gender, BDI) %>% 
+  summarise(n = n()) %>% #new column "n" = row count of each factor grouping
+  spread(living_dating, n)
+```
+
+```{r}
+anova_test(df3, formula = BDI ~ gender + living_dating + gender:living_dating, 
+                 detailed = TRUE, type = 3, effect.size = "pes")
+```
+
+
+
 
 
 
