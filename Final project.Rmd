@@ -29,6 +29,21 @@ library(MOTE)
 theme_set(theme_minimal())
 ```
 
+2 x 3 factorial ANOVA:
+IV: Dating, married, or single
+IV: living in a house or living in a dorm
+
+DV: BDI scores
+
+table() function to look at grouping 
+with(df, table(var1, var2))
+table(df$var1, df$var2)
+
+
+BELOW IS WHERE I STARTED OVER TRYING TO CREATE NEW VARIABLE
+
+
+THIS CODE WORKS
 # Load in the data
 ```{r}
 act_t1 <- import(here("data", "ACT Suicide Prevention T1.sav"), setclass = "tbl_df") %>% 
@@ -47,142 +62,85 @@ act_all <- full_join(act_t1, act_t1_12520)
 
 # Creating df with our variables of interest
 ```{r}
+
 df <- act_all %>% 
   select(id, dem1_17a, dem1_02a, bdi1)
+
+df_1 <- df %>% 
+  drop_na(dem1_17a, dem1_02a, bdi1)
+
+df_2 <- df_1[-c(220, 307, 651),]
+
+df_3 <- df_2[-c(220),]
+
+df_4 <- df_3 %>% 
+  rename(livingstat = dem1_02a,
+         datingstat = dem1_17a,
+         BDI = bdi1)
 ```
 
-# Checking variable types
+# Frequency table 
 ```{r}
-str(df)
-```
-
-# Frequency table THIS IS NOT MET....NO BALANCED GROUPS 
-```{r}
-df %>% 
-  group_by(dem1_02a, dem1_17a) %>% 
+df_4 %>% 
+  group_by(livingstat, datingstat) %>% 
   summarise(n = n()) %>% #new column "n" = row count of each factor grouping
-  spread(dem1_02a, n) # rows "spread" across the top
+  spread(livingstat, n) # rows "spread" across the top
 ```
 
 # Checking the assumptions with descriptives
 Descriptives:
-  The average BDI score is 7.68 (7.01), and IS NOT normally distributed (skew=1.77, kurtosis=4.39).
+  The average BDI score is 7.68 (6.99), and IS NOT normally distributed (skew=1.77, kurtosis=4.44).
 ```{r}
-describe(df)
+describe(df_4)
 ```
-
 
 # Visually inspecting the data 
   Step 1: Extract means to examine group differences
 ```{r}
-means <- df %>% #creating new object (tibble) with the means
-  group_by(dem1_02a, dem1_17a) %>% #grouping our results by our two independent variables, 'country' within levels of 'sen2'
-  summarise(mean_bdi = mean(bdi1))
+means <- df_4 %>% #creating new object (tibble) with the means
+  group_by(livingstat, datingstat) %>% #grouping our results by our two independent variables, 'country' within levels of 'sen2'
+  summarise(mean_bdi = mean(BDI))
 means
 ```
 
 Step 2: Examine the means using a profile plot
 ```{r}
 means %>% 
-  ggplot(aes(dem1_02a, mean_bdi, group = dem1_17a)) +
+  ggplot(aes(livingstat, mean_bdi, group = datingstat)) +
   geom_point() +
-  geom_line(aes(color = dem1_17a))
+  geom_line(aes(color = datingstat))
 ```
 
  Visualize using boxplots
 ```{r}
-df %>% 
-  ggplot(aes(x = dem1_17a, y = bdi1, fill = dem1_02a)) +
+df_4 %>% 
+  ggplot(aes(x = datingstat, y = BDI, fill = livingstat)) +
   geom_boxplot() +
   theme_minimal() +
   theme(legend.position="bottom")
 
 ```
  
-### Check the assumptions
- 
-  There are three assumptions that are required to be met in order to successfully conduct an ANOVA. These include: Homogeneity of variance, Independence of observations, and normality. All assumptions are met and are further assessed and described below. 
-  
 ### Assessing for homogeneity of variance with a Levene's Test.
+  Levene's Test on the mean of the variables is significant. This indicates that the variables do not meet the assumption of homogeneity in variance. However, experiemental study designs have more flexability with Levene's Test, and homogeneity in variance is not required to be considered for ANOVA analyses.
 ```{r}
-car::leveneTest(bdi1 ~ dem1_02a*dem1_17a, data = df, center = "mean")
+car::leveneTest(BDI ~ livingstat*datingstat, data = df_4, center = "mean")
 ```
 
-### Running the ANOVA
+## ANOVA 
 ```{r}
-anova_test(df, formula = bdi1 ~ dem1_02a + dem1_17a + dem1_02a:dem1_17a, 
-                 detailed = TRUE, type = 3, effect.size = "pes")
-
-## because we have unbalanced groups anova will not run 
-```
-2 x 4 factorial ANOVA:
-one possible combination:
-dating in a dorm
-dating in an apartment/house
-single in a dorm
-single in an apartment/house
-
-other possible combination:
-living in dorm
-living not in a dorm
-living in a dorm with roommates
-
-other possible variables: 
-(maybe age or year, in state vs out of state)
-male 
-female
-
-BDI
+### THIS DOES NOT WORK
+#anova_test(df_3, formula = bdi1 ~ dem1_02a + dem1_17a + dem1_02a:dem1_17a, 
+                 #detailed = TRUE, type = 3, effect.size = "pes")
 
 
-
-table() function to look at grouping 
-with(df, table(var1, var2))
-table(df$var1, df$var2)
-
-
-BELOW IS WHERE I STARTED OVER TRYING TO CREATE NEW VARIABLE
-
-
-### Creating new variables
-```{r}
-df1 <- act_all %>% 
-  select(id, dem1_02a, dem1_17a, bdi1, dem1_07a)
-
-
-df1 <- df1 %>% 
-  rename(livingstat = dem1_02a,
-         datingstat = dem1_17a,
-         BDI = bdi1,
-         gender = dem1_07a)
-```
-
-#dropping NA values in rows below
-```{r}
-df1$living_dating <- paste(df1$livingstat, df1$datingstat)
-
-df2 <- df1 %>%
-  drop_na(BDI, living_dating, gender)
-
-
-```
-
-#looking at group blances...this is where there is still an issue with the "I choose not to answer" option. Because of this the ANOVA will not run
-```{r}
-
-df2 %>% 
-  group_by(living_dating, gender, BDI) %>% 
-  summarise(n = n()) %>% #new column "n" = row count of each factor grouping
-  spread(living_dating, n)
-```
-
-```{r}
-anova_test(df3, formula = BDI ~ gender + living_dating + gender:living_dating, 
-                 detailed = TRUE, type = 3, effect.size = "pes")
+## THIS ONE WORKS
+res.aov2 <- aov(BDI ~ livingstat + datingstat + livingstat:datingstat, data = df_4)
+summary(res.aov2)
 ```
 
 
-
-
+ADD IN QQ PLOT VISUAL IN ADDITION TO SKEW AND KURTOSIS 
+in discussion discuss implications and not meeting criteria and just that it may impact the validity of the results.
 
 
