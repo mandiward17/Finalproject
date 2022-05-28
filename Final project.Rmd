@@ -92,6 +92,8 @@ Descriptives:
   The average BDI score is 7.68 (6.99), and IS NOT normally distributed (skew=1.77, kurtosis=4.44).
 ```{r}
 describe(df_4)
+
+describeBy(df_4, group = "livingstat")
 ```
 
 # Visually inspecting the data 
@@ -139,6 +141,17 @@ res.aov2 <- aov(BDI ~ livingstat + datingstat + livingstat:datingstat, data = df
 summary(res.aov2)
 ```
 
+## Effect size for interaction
+```{r}
+ omega.F(dfm = 1, dfe = 4,
+      Fvalue = 0.073, n = 963, a = .05)
+```
+
+## Effect size for main effect
+```{r}
+omega.F(dfm = 1, dfe = 404,
+      Fvalue = 8.305, n = 963, a = .05)
+```
 
 ADD IN QQ PLOT VISUAL IN ADDITION TO SKEW AND KURTOSIS 
 in discussion discuss implications and not meeting criteria and just that it may impact the validity of the results.
