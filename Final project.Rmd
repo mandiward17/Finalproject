@@ -110,7 +110,8 @@ Step 2: Examine the means using a profile plot
 means %>% 
   ggplot(aes(livingstat, mean_bdi, group = datingstat)) +
   geom_point() +
-  geom_line(aes(color = datingstat))
+  geom_line(aes(color = datingstat)) +
+  labs(title = "Profile Plot of Means", x = "Living Status", y = "BDI Score", fill = "Dating Status")
 ```
 
  Visualize using boxplots
@@ -119,7 +120,8 @@ df_4 %>%
   ggplot(aes(x = datingstat, y = BDI, fill = livingstat)) +
   geom_boxplot() +
   theme_minimal() +
-  theme(legend.position="bottom")
+  theme(legend.position="bottom") +
+  labs(title = "Boxplot of Means", x = "Dating Status", y = "BDI Score", fill = "Living Status")
 
 ```
  
@@ -156,4 +158,12 @@ omega.F(dfm = 1, dfe = 404,
 ADD IN QQ PLOT VISUAL IN ADDITION TO SKEW AND KURTOSIS 
 in discussion discuss implications and not meeting criteria and just that it may impact the validity of the results.
 
+```{r}
+df %>% 
+  ggplot(aes(sample = bdi1)) +
+    stat_qq()+
+    stat_qq_line(color = "violet") +
+    theme_classic() +
+    labs(title = "QQ Plot of Mean Depression Scores")
+```
 
