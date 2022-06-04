@@ -89,8 +89,6 @@ describe(df)
 
 
 
-
-
 # Frequency table 
 ```{r}
 df_4 %>% 
@@ -123,7 +121,7 @@ means %>%
   ggplot(aes(livingstat, mean_bdi, group = datingstat)) +
   geom_point() +
   geom_line(aes(color = datingstat)) +
-  labs(title = "Profile Plot of Means", x = "Living Status", y = "BDI Score", fill = "Dating Status")
+  labs(title = "Profile Plot of Means", x = "Living Location", y = "BDI Score", fill = "Relationship Status")
 ```
 
  Visualize using boxplots
@@ -133,7 +131,7 @@ df_4 %>%
   geom_boxplot() +
   theme_minimal() +
   theme(legend.position="bottom") +
-  labs(title = "Boxplot of Means", x = "Dating Status", y = "BDI Score", fill = "Living Status")
+  labs(title = "Boxplot of Means", x = "Relationship Status", y = "BDI Score", fill = "Living Location")
 
 ```
  
