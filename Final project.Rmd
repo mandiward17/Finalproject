@@ -79,6 +79,18 @@ df_4 <- df_3 %>%
          BDI = bdi1)
 ```
 
+# Describing Data
+
+```{r}
+describe(df)
+```
+
+
+
+
+
+
+
 # Frequency table 
 ```{r}
 df_4 %>% 
