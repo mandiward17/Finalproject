@@ -6,7 +6,7 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, 
+knitr::opts_chunk$set(#echo = FALSE, 
                       eval = TRUE, 
                       warning = FALSE, 
                       message = FALSE,
@@ -19,6 +19,7 @@ library(rio)
 library(here)
 library(knitr)
 library(kableExtra)
+library(emmeans)
 library(misty)
 library(janitor)
 library(rstatix)
@@ -159,6 +160,21 @@ summary(res.aov2)
       Fvalue = 0.073, n = 963, a = .05)
 ```
 
+### Estimate marginal means
+```{r}
+model <- lm(BDI ~ livingstat + datingstat, df_4) 
+
+means_1 <- emmeans(model, specs = "livingstat", by = "datingstat") 
+
+pairs(means_1) # display the means produced by emmeans() in pairs
+
+means_2 <- emmeans(model, ~livingstat*datingstat) #use same model but use different specifications
+
+pairs(means_2)
+```
+
+
+
 ## Effect size for main effect
 ```{r}
 omega.F(dfm = 1, dfe = 404,
@@ -169,8 +185,8 @@ ADD IN QQ PLOT VISUAL IN ADDITION TO SKEW AND KURTOSIS
 in discussion discuss implications and not meeting criteria and just that it may impact the validity of the results.
 
 ```{r}
-df %>% 
-  ggplot(aes(sample = bdi1)) +
+df_4 %>% 
+  ggplot(aes(sample = BDI)) +
     stat_qq()+
     stat_qq_line(color = "violet") +
     theme_classic() +
